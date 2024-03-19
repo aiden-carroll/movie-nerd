@@ -1,0 +1,1 @@
+INSERT INTO movie VALUES (:imdbid, :title, :year, :runtime, :rating, :genre, :director, :writer, :actors, :plot, :score) 

@@ -18,17 +18,21 @@ class MovieDb:
     
     def update(self, movie:Movie) -> None:
         if self.connection.execute("SELECT * FROM movie WHERE imdbid = ?", (movie.imdbid,)).fetchone() == None:
-            self.add(movie)
-            return
+            raise ValueError("Movie does not exist!")
         self.connection.execute("UPDATE movie SET title= ?, year= ? WHERE imdbid= ?", (movie.title, movie.year, movie.imdbid))
-
-    def get_alphabetical(self):
+    
+    def search_title(self, title:str="", order_col:str="title", descending:bool=False) -> list[Movie]:
+        title = '%' + title + '%'
+        if descending:
+            rows = self.connection.execute("SELECT * FROM movie WHERE title LIKE ? ORDER BY ? DESC", (title, order_col)).fetchall()
+        else:
+            rows = self.connection.execute("SELECT * FROM movie WHERE title LIKE ? ORDER BY ? ASC", (title, order_col)).fetchall()
         result = []
-        for row in self.connection.execute("SELECT * FROM movie ORDER BY title"):
+        for row in rows:
             movie = Movie.from_tuple(row)
             result.append(movie)
         return result
-
+    
     def close(self) -> None:
         self.connection.close()
         

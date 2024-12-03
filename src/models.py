@@ -1,5 +1,19 @@
 import datetime
 
+class Model:
+
+    def from_dict():
+        pass
+
+    def from_tuple():
+        pass
+
+    def as_tuple():
+        pass
+
+    def as_dict():
+        pass
+
 class Movie:
     def __init__(self, imdbid:int) -> None:
         self.set_imdbid(imdbid)
@@ -34,7 +48,7 @@ class Movie:
         movie.set_score(_tuple[10])
         return movie
     
-    def set_imdbid(self, imdbid:int):
+    def set_imdbid(self, imdbid:str):
         if len(imdbid) > 10:
             raise ValueError("imdbid can't be longer than 10 characters!")
         if imdbid[:2] != "tt":
@@ -87,5 +101,19 @@ class Movie:
             raise ValueError("Score cannot be negative!")
         self.score:float = score
     
-    def as_tuple(self) -> tuple[int, str, int, float]:
+    def as_tuple(self) -> tuple[int, str, int, str, str, str, str, str, str, str, str, int]:
         return (self.imdbid, self.title, self.year, self.rating, self.runtime, self.genre, self.director, self.writer, self.actors, self.plot, self.score)
+    
+    def as_dict(self):
+        return {
+            "title": self.title,
+            "year": self.year,
+            "runtime": self.runtime,
+            "rating": self.rating,
+            "genre": self.genre,
+            "director": self.director,
+            "writer": self.writer,
+            "actors": self.actors,
+            "plot": self.plot,
+            "score": self.score
+        }

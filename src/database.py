@@ -1,26 +1,49 @@
 import sqlite3 as sql
-from models import Movie
+from models import Model, Movie
 
-class MovieDb:
+class Database:
+    instance = {}
+    sqlpath = ""
+
     def __init__(self, path:str) -> None:
         self.connection: sql.Connection = sql.connect(path)
         self.setup()
 
-    def setup(self) -> None:
-        self.connection.executescript(open("src/SQL/setup.sql").read())
+    def get_instance(path:str):
+        if Database.instance:
+            return Database.instance
+        else:
+            Database.instance = Database(path)
+            return Database.instance
 
-    def add(self, movie:Movie) -> None:
+    def setup(self) -> None:
+        pass
+
+    def add(self, model:Model) -> None:
         if self.connection.execute("SELECT * FROM movie WHERE imdbid = ?", (movie.imdbid,)).fetchone() != None:
-            self.update(movie)
-            return
-        self.connection.execute(open("src/SQL/add_movie.sql").read(), movie.as_tuple())
+            raise ValueError("Movie already exists!")
+        self.connection.execute(open("src/SQL/" + Database.sqlpath + "/add.sql").read(), model.as_dict())
         self.connection.commit()
     
-    def update(self, movie:Movie) -> None:
+    def update(self, model:Model) -> None:
         if self.connection.execute("SELECT * FROM movie WHERE imdbid = ?", (movie.imdbid,)).fetchone() == None:
             raise ValueError("Movie does not exist!")
-        self.connection.execute("UPDATE movie SET title= ?, year= ? WHERE imdbid= ?", (movie.title, movie.year, movie.imdbid))
+        self.connection.execute(open("src/SQL/" + Database.sqlpath + "/update.sql"), model.as_dict())
     
+    def close(self) -> None:
+        self.connection.close()
+        Database.instance = None
+
+    def __del__(self):
+        self.close()
+
+class MovieDb(Database):
+    instance = {}
+    sqlpath = "movie"
+
+    def setup(self) -> None:
+        self.connection.executescript(open("src/SQL/movie_setup.sql").read())
+
     def search_title(self, title:str="", order_col:str="title", descending:bool=False) -> list[Movie]:
         title = '%' + title + '%'
         if descending:
@@ -32,7 +55,19 @@ class MovieDb:
             movie = Movie.from_tuple(row)
             result.append(movie)
         return result
-    
-    def close(self) -> None:
-        self.connection.close()
-        
+
+    def search_director(self, director:str="", order_col:str="title", descending:bool=False) -> list[Movie]:
+        director = '%' + director + '%'
+        if descending:
+            rows = self.connection.execute("SELECT * FROM movie WHERE director LIKE ? ORDER BY ? DESC", (director, order_col)).fetchall()
+        else:
+            rows = self.connection.execute("SELECT * FROM movie WHERE director LIKE ? ORDER BY ? ASC", (director, order_col)).fetchall()
+        result = []
+        for row in rows:
+            movie = Movie.from_tuple(row)
+            result.append(movie)
+        return result
+
+class ActorDb(Database):
+    instance =  {}
+    sqlpath = "actor"
